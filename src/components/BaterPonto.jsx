@@ -69,11 +69,11 @@ export default function BaterPonto({ emp, onClose }) {
     if (f) setFoto(f);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setProcessando(true);
-    setTimeout(() => {
-      addRegistro({
+    try {
+      await addRegistro({
         idEmpregado: emp.id,
         tipo,
         dataHora: new Date().toISOString(),
@@ -83,9 +83,11 @@ export default function BaterPonto({ emp, onClose }) {
         dispositivo: navigator.userAgent,
       });
       setMsg('Ponto registrado com sucesso! ✓');
-      setProcessando(false);
       setTimeout(() => onClose(), 1200);
-    }, 800);
+    } catch (error) {
+      setMsg(error.message);
+      setProcessando(false);
+    }
   };
 
   return (

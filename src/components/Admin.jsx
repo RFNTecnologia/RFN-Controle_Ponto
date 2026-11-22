@@ -32,8 +32,10 @@ export default function Admin({ onLogout }) {
   const [tab, setTab] = useState('empregados');
   const [empregados, setEmpregados] = useState(getEmpregados());
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ nome: '', cargo: '', matricula: '', cpf: '', email: '', telefone: '', senha: '', admin: false });
+  const [form, setForm] = useState({ nome: '', cargo: '', matricula: '', cpf: '', email: '', telefone: '', admin: false });
   const [editId, setEditId] = useState(null);
+  const [saveError, setSaveError] = useState('');
+  const [saveMessage, setSaveMessage] = useState('');
   const [anoFeriados, setAnoFeriados] = useState(new Date().getFullYear());
   const [customFeriados, setCustomFeriados] = useState(getFeriadosCustom());
   const [novoFeriado, setNovoFeriado] = useState({ nome: '', data: '' });
@@ -66,17 +68,24 @@ export default function Admin({ onLogout }) {
     setCfg((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleSalvar = (e) => {
+  const handleSalvar = async (e) => {
     e.preventDefault();
-    if (editId) {
-      updateEmpregado(editId, form);
-    } else {
-      addEmpregado(form);
+    setSaveError('');
+    setSaveMessage('');
+    try {
+      if (editId) {
+        await updateEmpregado(editId, form);
+      } else {
+        await addEmpregado(form);
+        setSaveMessage('Convite criado. O colaborador deve usar “Primeiro acesso” com este e-mail.');
+      }
+      setShowForm(false);
+      setEditId(null);
+      setForm({ nome: '', cargo: '', matricula: '', cpf: '', email: '', telefone: '', admin: false });
+      refresh();
+    } catch (error) {
+      setSaveError(error.message);
     }
-    setShowForm(false);
-    setEditId(null);
-    setForm({ nome: '', cargo: '', matricula: '', cpf: '', email: '', telefone: '', senha: '', admin: false });
-    refresh();
   };
 
   const editar = (emp) => {
@@ -87,25 +96,41 @@ export default function Admin({ onLogout }) {
       cpf: emp.cpf || '',
       email: emp.email || '',
       telefone: emp.telefone || '',
-      senha: '',
       admin: emp.admin,
     });
     setEditId(emp.id);
     setShowForm(true);
   };
 
-  const remover = (id) => {
+  const remover = async (id) => {
     if (window.confirm('Remover este colaborador?')) {
-      deleteEmpregado(id);
-      refresh();
+      try {
+        await deleteEmpregado(id);
+        refresh();
+      } catch (error) {
+        setSaveError(error.message);
+      }
     }
   };
 
-  const adicionarFeriado = (e) => {
+  const adicionarFeriado = async (e) => {
     e.preventDefault();
-    addFeriadoCustom(novoFeriado);
-    setNovoFeriado({ nome: '', data: '' });
-    setCustomFeriados(getFeriadosCustom());
+    try {
+      await addFeriadoCustom(novoFeriado);
+      setNovoFeriado({ nome: '', data: '' });
+      setCustomFeriados(getFeriadosCustom());
+    } catch (error) {
+      setSaveError(error.message);
+    }
+  };
+
+  const removerFeriado = async (id) => {
+    try {
+      await removeFeriadoCustom(id);
+      setCustomFeriados(getFeriadosCustom());
+    } catch (error) {
+      setSaveError(error.message);
+    }
   };
 
   const feriadosAno = todosFeriados(anoFeriados);
@@ -131,13 +156,15 @@ export default function Admin({ onLogout }) {
           ⚙️ Configurações
         </button>
       </div>
+      {saveError && <div className="error-msg">{saveError}</div>}
+      {saveMessage && <div className="success-msg">{saveMessage}</div>}
 
       {/* TAB: EMPREGADOS */}
       {tab === 'empregados' && (
         <div className="tab-content">
           <div className="section-header">
             <h3>Colaboradores ({empregados.length})</h3>
-            <button className="btn-primary" onClick={() => { setShowForm(true); setEditId(null); setForm({ nome: '', cargo: '', matricula: '', cpf: '', email: '', telefone: '', senha: '', admin: false }); }}>
+            <button className="btn-primary" onClick={() => { setShowForm(true); setEditId(null); setSaveError(''); setForm({ nome: '', cargo: '', matricula: '', cpf: '', email: '', telefone: '', admin: false }); }}>
               + Novo Colaborador
             </button>
           </div>
@@ -168,16 +195,13 @@ export default function Admin({ onLogout }) {
                   </div>
                   <div className="form-group">
                     <label>E-mail *</label>
-                    <input type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="email@ponto.com" />
+                    <input type="email" required readOnly={Boolean(editId)} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="email@empresa.com" />
                   </div>
                   <div className="form-group">
                     <label>Telefone *</label>
                     <input required value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} placeholder="(11) 91234-5678" />
                   </div>
-                  <div className="form-group">
-                    <label>Senha {editId ? '(deixe em branco para não alterar)' : '*'}</label>
-                    <input type="password" required={!editId} value={form.senha} onChange={(e) => setForm({ ...form, senha: e.target.value })} />
-                  </div>
+                  {!editId && <p>A conta e a senha serão criadas pelo colaborador usando o convite.</p>}
                   <div className="form-group">
                     <label>Tipo</label>
                     <div className="btn-group">
@@ -302,7 +326,7 @@ export default function Admin({ onLogout }) {
                     <td>{isCustom ? '📝 Personalizado' : '📅 Fixo'}</td>
                     <td>
                       {isCustom && (
-                        <button className="btn-small btn-danger" onClick={() => { removeFeriadoCustom(isCustom.id); setCustomFeriados(getFeriadosCustom()); }}>Remover</button>
+                        <button className="btn-small btn-danger" onClick={() => removerFeriado(isCustom.id)}>Remover</button>
                       )}
                     </td>
                   </tr>

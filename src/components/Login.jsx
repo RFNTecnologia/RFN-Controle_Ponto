@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
-import { getEmpregados } from '../data/storage.js';
+import {
+  requestPasswordReset,
+  signInWithEmail,
+  signUpWithInvite,
+} from '../data/auth.js';
 
 export default function Login({ onLogin }) {
   const [login, setLogin] = useState('');
@@ -8,75 +12,64 @@ export default function Login({ onLogin }) {
   const [carregando, setCarregando] = useState(false);
   const [recuperar, setRecuperar] = useState(false);
   const [recLogin, setRecLogin] = useState('');
-  const [recSenha, setRecSenha] = useState('');
   const [recMsg, setRecMsg] = useState('');
+  const [cadastrar, setCadastrar] = useState(false);
+  const [cadSenha, setCadSenha] = useState('');
+  const [cadConfirmacao, setCadConfirmacao] = useState('');
+  const [cadMsg, setCadMsg] = useState('');
 
-  const normalizar = (v) => (v || '').trim().toLowerCase();
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setErro('');
     setCarregando(true);
 
-    setTimeout(() => {
-      const termo = normalizar(login);
-      const emp = getEmpregados().find((e) => {
-        if (normalizar(e.matricula) === termo && e.senha === senha) return true;
-        return (
-          e.senha === senha &&
-          (
-            normalizar(e.email) === termo ||
-            normalizar(e.telefone) === termo ||
-            normalizar(e.cpf) === termo
-          )
-        );
-      });
-
-      if (emp) {
-        if (!emp.ativo) {
-          setErro('Usuário inativo. Contate o administrador.');
-          setCarregando(false);
-          return;
-        }
-        onLogin(emp);
-      } else {
-        setErro('Credenciais incorretas. Verifique e-mail/telefone/CPF/matrícula e senha.');
-      }
+    try {
+      const emp = await signInWithEmail(login, senha);
+      onLogin(emp);
+    } catch (error) {
+      setErro(error.message);
+    } finally {
       setCarregando(false);
-    }, 600);
+    }
   };
 
-  const handleRecuperar = (e) => {
+  const handleRecuperar = async (e) => {
     e.preventDefault();
     setRecMsg('');
     setErro('');
-    const termo = normalizar(recLogin);
-    if (!termo || !recSenha || recSenha.length < 4) {
-      setRecMsg('Informe o acesso e uma nova senha (mínimo 4 caracteres).');
+    try {
+      await requestPasswordReset(recLogin);
+      setRecMsg('Se o e-mail estiver cadastrado, você receberá um link para redefinir a senha.');
+    } catch (error) {
+      setRecMsg(error.message);
+    }
+  };
+
+  const handleCadastro = async (e) => {
+    e.preventDefault();
+    setCadMsg('');
+    if (cadSenha.length < 8) {
+      setCadMsg('A senha deve ter pelo menos 8 caracteres.');
       return;
     }
-    const lista = getEmpregados();
-    const idx = lista.findIndex((emp) => {
-      return (
-        normalizar(emp.matricula) === termo ||
-        normalizar(emp.email) === termo ||
-        normalizar(emp.telefone) === termo ||
-        normalizar(emp.cpf) === termo
-      );
-    });
-    if (idx === -1) {
-      setRecMsg('Usuário não encontrado. Verifique o dado informado.');
+    if (cadSenha !== cadConfirmacao) {
+      setCadMsg('As senhas não coincidem.');
       return;
     }
-    lista[idx] = { ...lista[idx], senha: recSenha };
-    localStorage.setItem('ponto.empregados', JSON.stringify(lista));
-    setRecMsg('Senha redefinida com sucesso! Faça login com a nova senha.');
-    setRecLogin('');
-    setRecSenha('');
-    setTimeout(() => {
-      setRecuperar(false);
-      setRecMsg('');
-    }, 2500);
+
+    setCarregando(true);
+    try {
+      const result = await signUpWithInvite(login, cadSenha);
+      if (result.confirmationRequired) {
+        setCadMsg('Conta criada, se havia convite. Verifique seu e-mail para confirmar o cadastro.');
+      } else {
+        onLogin(result.profile);
+      }
+    } catch (error) {
+      setCadMsg(error.message);
+    } finally {
+      setCarregando(false);
+    }
   };
 
   return (
@@ -97,11 +90,17 @@ export default function Login({ onLogin }) {
       <div className="login-form-side">
         <div className="login-form-wrapper">
           <div className="login-form-header">
-            <h2>Bem-vindo de volta</h2>
-            <p>Entre com suas credenciais para acessar o sistema</p>
+            <h2>{recuperar ? 'Recuperar senha' : cadastrar ? 'Primeiro acesso' : 'Bem-vindo de volta'}</h2>
+            <p>
+              {recuperar
+                ? 'Enviaremos um link seguro para o seu e-mail.'
+                : cadastrar
+                  ? 'Use o e-mail autorizado pelo administrador.'
+                  : 'Entre com suas credenciais para acessar o sistema.'}
+            </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="login-form">
+          {!recuperar && !cadastrar && <form onSubmit={handleSubmit} className="login-form">
             {erro && (
               <div className="login-error">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -114,7 +113,7 @@ export default function Login({ onLogin }) {
             )}
 
             <div className="login-field">
-              <label htmlFor="login">Acesso</label>
+              <label htmlFor="login">E-mail</label>
               <div className="login-input-wrapper">
                 <svg className="login-input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -122,15 +121,14 @@ export default function Login({ onLogin }) {
                 </svg>
                 <input
                   id="login"
-                  type="text"
+                  type="email"
                   value={login}
                   onChange={(e) => setLogin(e.target.value)}
-                  placeholder="E-mail, telefone, CPF ou matrícula"
+                  placeholder="nome@empresa.com"
                   required
                   autoFocus
                 />
               </div>
-              <span className="login-hint">Use e-mail, telefone, CPF ou matrícula</span>
             </div>
 
             <div className="login-field">
@@ -169,18 +167,19 @@ export default function Login({ onLogin }) {
               )}
             </button>
             <button type="button" className="login-forgot" onClick={() => setRecuperar(true)}>Esqueci minha senha</button>
-          </form>
+            <button type="button" className="login-forgot" onClick={() => setCadastrar(true)}>Primeiro acesso? Criar conta com convite</button>
+          </form>}
 
           {recuperar && (
             <form onSubmit={handleRecuperar} className="login-form login-recover">
               {recMsg && (
-                <div className={`login-message ${recMsg.includes('sucesso') ? 'ok' : 'error'}`}>
+                <div className={`login-message ${recMsg.includes('Se o e-mail') ? 'ok' : 'error'}`}>
                   <span>{recMsg}</span>
                 </div>
               )}
 
               <div className="login-field">
-                <label htmlFor="rec-login">Acesso (e-mail, telefone, CPF ou matrícula)</label>
+                <label htmlFor="rec-login">E-mail</label>
                 <div className="login-input-wrapper">
                   <svg className="login-input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -188,38 +187,54 @@ export default function Login({ onLogin }) {
                   </svg>
                   <input
                     id="rec-login"
-                    type="text"
+                    type="email"
                     value={recLogin}
                     onChange={(e) => setRecLogin(e.target.value)}
-                    placeholder="Informe seu acesso"
+                    placeholder="nome@empresa.com"
                     required
                     autoFocus
                   />
                 </div>
               </div>
 
+              <div className="modal-actions">
+                <button type="button" className="btn-secondary" onClick={() => { setRecuperar(false); setRecMsg(''); }}>Voltar</button>
+                <button type="submit" className="btn-primary">Enviar link</button>
+              </div>
+            </form>
+          )}
+
+          {cadastrar && (
+            <form onSubmit={handleCadastro} className="login-form login-recover">
+              {cadMsg && (
+                <div className={`login-message ${cadMsg.startsWith('Conta criada') ? 'ok' : 'error'}`}>
+                  <span>{cadMsg}</span>
+                </div>
+              )}
               <div className="login-field">
-                <label htmlFor="rec-senha">Nova senha</label>
+                <label htmlFor="signup-email">E-mail autorizado</label>
                 <div className="login-input-wrapper">
-                  <svg className="login-input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                  </svg>
                   <input
-                    id="rec-senha"
-                    type="password"
-                    value={recSenha}
-                    onChange={(e) => setRecSenha(e.target.value)}
-                    placeholder="Mínimo 4 caracteres"
+                    id="signup-email"
+                    type="email"
+                    value={login}
+                    onChange={(e) => setLogin(e.target.value)}
                     required
-                    minLength={4}
+                    autoFocus
                   />
                 </div>
               </div>
-
+              <div className="login-field">
+                <label htmlFor="signup-password">Senha (mínimo 8 caracteres)</label>
+                <input id="signup-password" type="password" value={cadSenha} onChange={(e) => setCadSenha(e.target.value)} minLength={8} required />
+              </div>
+              <div className="login-field">
+                <label htmlFor="signup-confirm">Confirmar senha</label>
+                <input id="signup-confirm" type="password" value={cadConfirmacao} onChange={(e) => setCadConfirmacao(e.target.value)} minLength={8} required />
+              </div>
               <div className="modal-actions">
-                <button type="button" className="btn-secondary" onClick={() => { setRecuperar(false); setRecMsg(''); }}>Voltar</button>
-                <button type="submit" className="btn-primary">Redefinir senha</button>
+                <button type="button" className="btn-secondary" onClick={() => { setCadastrar(false); setCadMsg(''); }}>Voltar</button>
+                <button type="submit" className="btn-primary" disabled={carregando}>Criar conta</button>
               </div>
             </form>
           )}

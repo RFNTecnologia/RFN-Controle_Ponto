@@ -6,22 +6,26 @@ export default function JustificarAusencia({ emp, onDone }) {
   const [form, setForm] = useState({ data: '', motivo: '', foto: null });
   const [msg, setMsg] = useState('');
 
-  const handle = (e) => {
+  const handle = async (e) => {
     e.preventDefault();
     const data = form.data;
     if (!data) return setMsg('Selecione a data.');
     if (ehDomingo(data) || ehFeriado(data)) return setMsg('Domingos e feriados não precisam de justificativa.');
-    addRegistro({
-      idEmpregado: emp.id,
-      tipo: 'justificativa',
-      dataHora: `${data}T12:00:00`,
-      localizacao: null,
-      foto: form.foto,
-      justificativa: form.motivo,
-    });
-    setMsg('✅ Justificativa enviada com sucesso!');
-    setForm({ data: '', motivo: '', foto: null });
-    setTimeout(onDone, 1200);
+    try {
+      await addRegistro({
+        idEmpregado: emp.id,
+        tipo: 'justificativa',
+        dataHora: `${data}T12:00:00`,
+        localizacao: null,
+        foto: form.foto,
+        justificativa: form.motivo,
+      });
+      setMsg('✅ Justificativa enviada com sucesso!');
+      setForm({ data: '', motivo: '', foto: null });
+      setTimeout(onDone, 1200);
+    } catch (error) {
+      setMsg(`❌ ${error.message}`);
+    }
   };
 
   return (

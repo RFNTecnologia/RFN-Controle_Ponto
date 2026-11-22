@@ -1,22 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import { getEmpregados, updateEmpregado } from '../data/storage.js';
+import React, { useState } from 'react';
+import { updateEmpregado } from '../data/storage.js';
 
 export default function DadosCadastrais({ emp, onDone }) {
   const [form, setForm] = useState({ ...emp });
   const [msg, setMsg] = useState('');
 
-  const handle = (e) => {
+  const handle = async (e) => {
     e.preventDefault();
-    updateEmpregado(emp.id, form);
-    setMsg('✅ Dados atualizados!');
-    setTimeout(onDone, 1000);
+    try {
+      await updateEmpregado(emp.id, form);
+      setMsg('✅ Dados atualizados!');
+      setTimeout(onDone, 1000);
+    } catch (error) {
+      setMsg(`❌ ${error.message}`);
+    }
   };
 
   return (
     <div className="placeholder-page">
       <h2>👤 Dados Cadastrais</h2>
       <div className="card">
-        {msg && <div className="success-msg">{msg}</div>}
+        {msg && <div className={msg.startsWith('✅') ? 'success-msg' : 'error-msg'}>{msg}</div>}
         <form onSubmit={handle}>
           <div className="form-group">
             <label>Nome Completo *</label>
@@ -24,7 +28,7 @@ export default function DadosCadastrais({ emp, onDone }) {
           </div>
           <div className="form-group">
             <label>E-mail *</label>
-            <input type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+            <input type="email" required value={form.email} readOnly />
           </div>
           <div className="form-group">
             <label>Telefone *</label>
@@ -36,7 +40,7 @@ export default function DadosCadastrais({ emp, onDone }) {
           </div>
           <div className="form-group">
             <label>Matrícula</label>
-            <input value={form.matricula || ''} onChange={(e) => setForm({ ...form, matricula: e.target.value })} />
+            <input value={form.matricula || ''} readOnly />
           </div>
           <div className="form-group">
             <label>Cargo</label>
