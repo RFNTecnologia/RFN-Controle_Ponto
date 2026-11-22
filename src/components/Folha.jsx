@@ -4,6 +4,7 @@ import { calcularMes, minutosParaHM } from '../utils/calculos.js';
 import { getEmpregados, getRegistros } from '../data/storage.js';
 import { ehFeriado, ehDomingo, ehSabado } from '../data/feriados.js';
 import { exportarCSV } from './Admin.jsx';
+import { LOGO_URL } from '../data/branding.js';
 
 const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 const MESES = [
@@ -49,7 +50,7 @@ export default function Folha({ empId, mesAno }) {
       {/* ===== HEADER ===== */}
       <div className="fp-header">
         <div className="fp-header-left">
-          <img className="fp-logo" src="/logo.png" alt="RFN Tecnologia" />
+          <img className="fp-logo" src={LOGO_URL} alt="RFN Tecnologia" />
           <div>
             <div className="fp-company">{CONFIG.empresa}</div>
             <div className="fp-document">Folha de Ponto Eletrônica</div>

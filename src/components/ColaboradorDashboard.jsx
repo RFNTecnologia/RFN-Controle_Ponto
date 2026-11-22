@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { LOGO_URL } from '../data/branding.js';
 import BaterPonto from './BaterPonto.jsx';
 import Folha from './Folha.jsx';
 import JustificarAusencia from './JustificarAusencia.jsx';
@@ -46,7 +47,7 @@ export default function ColaboradorDashboard({ emp, onLogout }) {
           <span /><span /><span />
         </button>
         <div className="topbar-brand">
-          <img className="topbar-logo" src="/logo.png" alt="RFN Tecnologia" />
+          <img className="topbar-logo" src={LOGO_URL} alt="RFN Tecnologia" />
           <span className="topbar-title">PontoFácil</span>
         </div>
         <div className="topbar-user-badge">
@@ -59,7 +60,7 @@ export default function ColaboradorDashboard({ emp, onLogout }) {
       <nav className={`drawer ${drawerOpen ? 'open' : ''}`}>
         <div className="drawer-header">
           <div className="drawer-logo">
-            <img src="/logo.png" alt="RFN Tecnologia" />
+            <img src={LOGO_URL} alt="RFN Tecnologia" />
             <span className="drawer-brand-text">RFNTecnologia</span>
           </div>
           <div className="drawer-company-badge">Central do Funcionário</div>

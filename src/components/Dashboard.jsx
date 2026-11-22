@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { LOGO_URL } from '../data/branding.js';
 import BaterPonto from './BaterPonto.jsx';
 import Folha from './Folha.jsx';
 import { CONFIG } from '../data/config.js';
@@ -39,7 +40,7 @@ export default function Dashboard({ emp, onLogout, isAdmin, onGoAdmin }) {
       {/* Sidebar */}
       <aside className="sidebar">
         <div className="sidebar-brand">
-          <img className="sidebar-logo" src="/logo.png" alt="RFN Tecnologia" />
+          <img className="sidebar-logo" src={LOGO_URL} alt="RFN Tecnologia" />
           <h2>PontoFácil</h2>
           <span className="empresa">{CONFIG.empresa}</span>
         </div>

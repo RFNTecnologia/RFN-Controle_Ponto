@@ -4,6 +4,7 @@ import {
   signInWithEmail,
   signUpWithInvite,
 } from '../data/auth.js';
+import { LOGO_URL } from '../data/branding.js';
 
 export default function Login({ onLogin }) {
   const [login, setLogin] = useState('');
@@ -78,7 +79,7 @@ export default function Login({ onLogin }) {
       <div className="login-brand">
         <div className="login-brand-content">
           <div className="login-logo">
-            <img src="/logo.png" alt="RFN Tecnologia" />
+            <img src={LOGO_URL} alt="RFN Tecnologia" />
           </div>
           <h1 className="login-title">RFNTecnologia</h1>
           <p className="login-tagline">@ Desenvolvimento &amp; Soluções para Software @</p>
