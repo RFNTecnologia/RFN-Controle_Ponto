@@ -1747,6 +1747,16 @@ select:focus, input:focus, textarea:focus {
   margin: 0;
 }
 
+.novo-colaborador {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  white-space: nowrap;
+  font-size: 15px;
+  z-index: 2;
+}
+
 .add-form {
   display: flex;
   gap: 12px;

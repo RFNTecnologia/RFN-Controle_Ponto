@@ -164,7 +164,11 @@ export default function Admin({ onLogout }) {
         <div className="tab-content">
           <div className="section-header">
             <h3>Colaboradores ({empregados.length})</h3>
-            <button className="btn-primary" onClick={() => { setShowForm(true); setEditId(null); setSaveError(''); setForm({ nome: '', cargo: '', matricula: '', cpf: '', email: '', telefone: '', admin: false }); }}>
+            <button
+              type="button"
+              className="btn-primary novo-colaborador"
+              onClick={() => { setShowForm(true); setEditId(null); setSaveError(''); setForm({ nome: '', cargo: '', matricula: '', cpf: '', email: '', telefone: '', admin: false }); }}
+            >
               + Novo Colaborador
             </button>
           </div>
