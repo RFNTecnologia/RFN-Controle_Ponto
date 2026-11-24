@@ -1704,6 +1704,20 @@ select:focus, input:focus, textarea:focus {
   background: #dc2626;
 }
 
+.admin-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.novo-colaborador-cabecalho {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  white-space: nowrap;
+}
+
 .admin-tabs {
   display: flex;
   gap: 8px;

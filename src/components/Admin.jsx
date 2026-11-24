@@ -139,7 +139,22 @@ export default function Admin({ onLogout }) {
     <div className="admin-container">
       <div className="admin-header">
         <h2>⚙️ Painel Administrativo</h2>
-        <button className="btn-logout-admin" onClick={onLogout}>Sair</button>
+        <div className="admin-header-actions">
+          <button
+            type="button"
+            className="btn-primary novo-colaborador-cabecalho"
+            onClick={() => {
+              setTab('empregados');
+              setShowForm(true);
+              setEditId(null);
+              setSaveError('');
+              setForm({ nome: '', cargo: '', matricula: '', cpf: '', email: '', telefone: '', admin: false });
+            }}
+          >
+            + Novo Colaborador
+          </button>
+          <button className="btn-logout-admin" onClick={onLogout}>Sair</button>
+        </div>
       </div>
 
       <div className="admin-tabs">
