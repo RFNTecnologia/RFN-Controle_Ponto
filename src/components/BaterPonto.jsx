@@ -1,9 +1,8 @@
 import React, { useState, useRef } from 'react';
-import { useLocalStorage } from '../hooks.js';
 import { useGeolocation } from '../hooks.js';
 import { useCamera } from '../hooks.js';
-import { CONFIG } from '../data/config.js';
-import { getEmpregados, addRegistro } from '../data/storage.js';
+import { getConfig } from '../data/config.js';
+import { addRegistro } from '../data/storage.js';
 import {
   ultimoTipoHoje,
   ehDomingo,
@@ -29,6 +28,24 @@ export default function BaterPonto({ emp, onClose }) {
   const isFeriado = ehFeriado(hoje);
   const isDomingo = ehDomingo(hoje);
   const isSabado = ehSabado(hoje);
+  const CONFIG = getConfig();
+
+  if (isSabado && !CONFIG.diasSemana.includes(6)) {
+    return (
+      <div className="modal-overlay">
+        <div className="modal">
+          <div className="modal-header">
+            <h3>Bater Ponto</h3>
+            <button className="btn-close" onClick={onClose}>✕</button>
+          </div>
+          <div className="card-info">
+            <div className="info-badge holiday">🔴 Sábado - Sem expediente configurado</div>
+            <p>Não é necessário bater ponto neste dia.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (isDomingo || isFeriado) {
     return (

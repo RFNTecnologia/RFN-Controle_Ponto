@@ -49,6 +49,28 @@ create table if not exists public.employee_invites (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.app_settings (
+  id text primary key,
+  data jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.requests (
+  id text primary key,
+  employee_id text not null references public.employees(id) on delete cascade,
+  data jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.activities (
+  id text primary key,
+  employee_id text not null references public.employees(id) on delete cascade,
+  data jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create index if not exists time_records_employee_id_idx
   on public.time_records (employee_id);
 
@@ -217,6 +239,9 @@ alter table public.employees enable row level security;
 alter table public.time_records enable row level security;
 alter table public.custom_holidays enable row level security;
 alter table public.employee_invites enable row level security;
+alter table public.app_settings enable row level security;
+alter table public.requests enable row level security;
+alter table public.activities enable row level security;
 
 drop policy if exists "public employees" on public.employees;
 drop policy if exists "employees read own or admin" on public.employees;
@@ -310,6 +335,61 @@ create policy "employee invites admin only" on public.employee_invites
   using (public.is_admin())
   with check (public.is_admin());
 
-revoke all on table public.employees, public.time_records, public.custom_holidays, public.employee_invites
+drop policy if exists "app settings authenticated read" on public.app_settings;
+drop policy if exists "app settings admin write" on public.app_settings;
+create policy "app settings authenticated read" on public.app_settings
+  for select to authenticated using (true);
+create policy "app settings admin write" on public.app_settings
+  for all to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
+drop policy if exists "requests own or admin" on public.requests;
+drop policy if exists "requests insert own or admin" on public.requests;
+drop policy if exists "requests admin update" on public.requests;
+create policy "requests own or admin" on public.requests
+  for select to authenticated
+  using (public.is_admin() or exists (
+    select 1 from public.employees
+    where employees.id = requests.employee_id
+      and employees.auth_user_id = auth.uid()
+  ));
+create policy "requests insert own or admin" on public.requests
+  for insert to authenticated
+  with check (public.is_admin() or exists (
+    select 1 from public.employees
+    where employees.id = requests.employee_id
+      and employees.auth_user_id = auth.uid()
+  ));
+create policy "requests admin update" on public.requests
+  for update to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
+drop policy if exists "activities own or admin" on public.activities;
+drop policy if exists "activities insert own or admin" on public.activities;
+drop policy if exists "activities admin update" on public.activities;
+create policy "activities own or admin" on public.activities
+  for select to authenticated
+  using (public.is_admin() or exists (
+    select 1 from public.employees
+    where employees.id = activities.employee_id
+      and employees.auth_user_id = auth.uid()
+  ));
+create policy "activities insert own or admin" on public.activities
+  for insert to authenticated
+  with check (public.is_admin() or exists (
+    select 1 from public.employees
+    where employees.id = activities.employee_id
+      and employees.auth_user_id = auth.uid()
+  ));
+create policy "activities admin update" on public.activities
+  for update to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
+revoke all on table public.employees, public.time_records, public.custom_holidays, public.employee_invites,
+  public.app_settings, public.requests, public.activities
   from public, anon, authenticated;
-grant select, insert, update, delete on table public.employees, public.time_records, public.custom_holidays, public.employee_invites to authenticated;
+grant select, insert, update, delete on table public.employees, public.time_records, public.custom_holidays,
+  public.employee_invites, public.app_settings, public.requests, public.activities to authenticated;

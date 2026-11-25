@@ -1,4 +1,4 @@
-import { CONFIG } from '../data/config.js';
+import { getConfig } from '../data/config.js';
 import { ehDomingo, ehFeriado, ehSabado, diaUtil, todosFeriados } from '../data/feriados.js';
 import { getRegistros } from '../data/storage.js';
 
@@ -29,6 +29,7 @@ export function minutosParaHoras(min) {
 
 // Calcula minutos trabalhados em um dia a partir dos registros
 export function minutosTrabalhadosDia(registrosDia) {
+  const CONFIG = getConfig();
   let total = 0;
   const entradas = registrosDia
     .filter((r) => r.tipo === 'entrada')
@@ -91,6 +92,7 @@ export function diasDoMes(ano, mes) {
 
 // Estatísticas do mês
 export function calcularMes(idEmp, mesAno) {
+  const CONFIG = getConfig();
   const [ano, mes] = mesAno.split('-').map(Number);
   const registros = getRegistrosMes(idEmp, mesAno);
   const todasDias = diasDoMes(ano, mes - 1);
@@ -110,9 +112,12 @@ export function calcularMes(idEmp, mesAno) {
     diasJust = 0;
   let totalMinTrab = 0,
     totalMinEsperado = 0;
+  const hoje = new Date();
+  const hojeISO = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
 
   todasDias.forEach(({ data }) => {
     const d = dados[data];
+    if (data > hojeISO) return;
     if (diaUtil(data)) {
       diasUteis++;
       totalMinEsperado += CONFIG.jornadaDiariaMinutos;

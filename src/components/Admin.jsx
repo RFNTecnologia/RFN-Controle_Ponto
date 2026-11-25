@@ -8,14 +8,16 @@ export function exportarCSV(idEmp, mesAno) {
     (r) => r.idEmpregado === idEmp && r.dataHora.startsWith(mesAno)
   );
   const emp = getEmpregados().find((e) => e.id === idEmp);
-  const header = 'Data,Hora,Tipo,Latitude,Longitude,Justificativa\n';
+  const escapeCSV = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+  const header = ['Data','Hora','Tipo','Latitude','Longitude','Justificativa'].map(escapeCSV).join(';') + '\n';
   const rows = registros
     .map((r) => {
       const data = r.dataHora.split('T')[0];
       const hora = new Date(r.dataHora).toLocaleTimeString('pt-BR');
       const loc = r.localizacao ? `${r.localizacao.lat},${r.localizacao.lng}` : '';
       const just = r.justificativa || '';
-      return `${data},${hora},${r.tipo},${loc},${just}`;
+      const [lat, lng] = loc ? loc.split(',') : ['', ''];
+      return [data, hora, r.tipo, lat, lng, just].map(escapeCSV).join(';');
     })
     .join('\n');
   const csv = '﻿' + header + rows;
@@ -57,11 +59,16 @@ export default function Admin({ onLogout }) {
     setCustomFeriados(getFeriadosCustom());
   };
 
-  const salvarConfig = (e) => {
+  const salvarConfig = async (e) => {
     e.preventDefault();
-    saveConfig(cfg);
-    setCfgSaved(true);
-    setTimeout(() => setCfgSaved(false), 2000);
+    setSaveError('');
+    try {
+      await saveConfig(cfg);
+      setCfgSaved(true);
+      setTimeout(() => setCfgSaved(false), 2000);
+    } catch (error) {
+      setSaveError(error.message);
+    }
   };
 
   const handleCfgChange = (key, value) => {

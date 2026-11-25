@@ -3,6 +3,8 @@ import { supabase } from './supabase.js';
 let empregadosCache = [];
 let registrosCache = [];
 let feriadosCache = [];
+let solicitacoesCache = [];
+let atividadesCache = [];
 
 function requireSupabase() {
   if (!supabase) {
@@ -48,12 +50,15 @@ export async function initDB() {
     return;
   }
 
-  const [employees, records, holidays] = await Promise.all([
+  const [employees, records, holidays, requests, activities, settings] = await Promise.all([
     client.from('employees').select('id,data'),
     client.from('time_records').select('id,employee_id,data'),
     client.from('custom_holidays').select('id,data'),
+    client.from('requests').select('id,employee_id,data').order('created_at', { ascending: false }),
+    client.from('activities').select('id,employee_id,data').order('created_at', { ascending: false }),
+    client.from('app_settings').select('data').eq('id', 'company').maybeSingle(),
   ]);
-  for (const result of [employees, records, holidays]) {
+  for (const result of [employees, records, holidays, requests, activities, settings]) {
     if (result.error) throw new Error(`Não foi possível carregar os dados: ${result.error.message}`);
   }
 
@@ -69,6 +74,45 @@ export async function initDB() {
     idEmpregado: row.employee_id,
   }));
   feriadosCache = (holidays.data || []).map((row) => ({ ...row.data, id: row.id }));
+  solicitacoesCache = (requests.data || []).map((row) => ({ ...row.data, id: row.id, employeeId: row.employee_id }));
+  atividadesCache = (activities.data || []).map((row) => ({ ...row.data, id: row.id, employeeId: row.employee_id }));
+  if (settings.data?.data) {
+    localStorage.setItem('ponto.config', JSON.stringify({ ...settings.data.data }));
+  }
+}
+
+export function getSolicitacoes(employeeId) {
+  return solicitacoesCache.filter((item) => item.employeeId === employeeId);
+}
+
+export async function addSolicitacao(employeeId, data) {
+  const client = requireSupabase();
+  const id = `${Date.now()}${Math.random().toString(36).slice(2, 8)}`;
+  const row = {
+    id,
+    employee_id: String(employeeId),
+    data: { ...data, status: 'Pendente' },
+  };
+  const { error } = await client.from('requests').insert(row);
+  if (error) throw new Error(`Não foi possível enviar a solicitação: ${error.message}`);
+  const item = { ...row.data, id, employeeId: String(employeeId) };
+  solicitacoesCache = [item, ...solicitacoesCache];
+  return item;
+}
+
+export function getAtividades(employeeId) {
+  return atividadesCache.filter((item) => item.employeeId === employeeId);
+}
+
+export async function addAtividade(employeeId, data) {
+  const client = requireSupabase();
+  const id = `${Date.now()}${Math.random().toString(36).slice(2, 8)}`;
+  const row = { id, employee_id: String(employeeId), data };
+  const { error } = await client.from('activities').insert(row);
+  if (error) throw new Error(`Não foi possível registrar a atividade: ${error.message}`);
+  const item = { ...row.data, id, employeeId: String(employeeId) };
+  atividadesCache = [item, ...atividadesCache];
+  return item;
 }
 
 export function getEmpregados() {
@@ -102,6 +146,7 @@ export async function addEmpregado(emp) {
     data: profileData,
   });
   if (error) throw new Error(`Não foi possível criar o convite: ${error.message}`);
+  empregadosCache = [...empregadosCache, novo];
   return novo;
 }
 
@@ -182,6 +227,8 @@ export function clearDB() {
   empregadosCache = [];
   registrosCache = [];
   feriadosCache = [];
+  solicitacoesCache = [];
+  atividadesCache = [];
   clearLegacyStorage();
 }
 

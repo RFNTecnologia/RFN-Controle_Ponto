@@ -1,0 +1,32 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Validar projeto PontoFacil",
+			"type": "shell",
+			"command": "npm install ; npm test ; npm run build",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Checar vulnerabilidades npm",
+			"type": "shell",
+			"command": "npm audit --omit=dev",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Resumo final Git",
+			"type": "shell",
+			"command": "git --no-pager status --short",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		}
+	]
+}

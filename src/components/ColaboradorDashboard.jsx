@@ -9,9 +9,10 @@ import MinhasSolicitacoes from './MinhasSolicitacoes.jsx';
 import Configuracoes from './Configuracoes.jsx';
 import Ajuda from './Ajuda.jsx';
 import { CONFIG } from '../data/config.js';
-import { getRegistros, getEmpregados, updateEmpregado } from '../data/storage.js';
+import { getRegistros, addSolicitacao, addAtividade, getAtividades } from '../data/storage.js';
 import { ehFeriado, ehDomingo, ehSabado } from '../data/feriados.js';
 import { calcularMes, minutosParaHoras } from '../utils/calculos.js';
+import { getConfig } from '../data/config.js';
 
 export default function ColaboradorDashboard({ emp, onLogout }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -28,6 +29,8 @@ export default function ColaboradorDashboard({ emp, onLogout }) {
   const statusHoje = stats.dados[hoje];
   const ferHoje = ehFeriado(hoje);
   const domHoje = ehDomingo(hoje);
+  const sabadoHoje = ehSabado(hoje);
+  const hasExpedienteSabado = getConfig().diasSemana.includes(6);
 
   const navigate = (v) => {
     setView(v);
@@ -125,7 +128,7 @@ export default function ColaboradorDashboard({ emp, onLogout }) {
         )}
         {view === 'cartao-ponto' && <CartaoPontoView empId={emp.id} />}
         {view === 'incluir-ponto' && <IncluirPontoView emp={emp} onDone={() => navigate('indicadores')} />}
-        {view === 'incluir-atividade' && <IncluirAtividadeView onDone={() => navigate('indicadores')} />}
+        {view === 'incluir-atividade' && <IncluirAtividadeView emp={emp} onDone={() => navigate('indicadores')} />}
         {view === 'ajustar-ponto' && <AjustarPontoView emp={emp} onDone={() => navigate('indicadores')} />}
         {view === 'justificar-ausencia' && <JustificarAusencia emp={emp} onDone={() => navigate('indicadores')} />}
         {view === 'solicitacoes' && <MinhasSolicitacoes emp={emp} />}
@@ -189,7 +192,7 @@ function Indicadores({ emp, stats, ultimoReg, statusHoje, ferHoje, domHoje }) {
       </div>
 
       {/* Botão de bater ponto */}
-      {!domHoje && !ferHoje && (
+      {!domHoje && !ferHoje && !(sabadoHoje && !hasExpedienteSabado) && (
         <button className="btn-bater-ponto" onClick={() => setShowBaterPonto(true)}>
           <span className="bater-icon">⏱️</span>
           <span className="bater-text">Bater Ponto</span>
@@ -238,25 +241,104 @@ function IncluirPontoView({ emp, onDone }) {
   return open ? <BaterPonto emp={emp} onClose={() => { setOpen(false); onDone(); }} /> : null;
 }
 
-function IncluirAtividadeView({ onDone }) {
-  const registros = getRegistros();
+function IncluirAtividadeView({ emp, onDone }) {
+  const [descricao, setDescricao] = useState('');
+  const [data, setData] = useState(new Date().toISOString().slice(0, 10));
+  const [msg, setMsg] = useState('');
+  const atividades = getAtividades(emp.id);
+  const handle = async (event) => {
+    event.preventDefault();
+    setMsg('');
+    try {
+      await addAtividade(emp.id, { data, descricao, status: 'Registrada' });
+      setDescricao('');
+      setMsg('✅ Atividade registrada!');
+    } catch (error) {
+      setMsg(`❌ ${error.message}`);
+    }
+  };
   return (
     <div className="placeholder-page">
       <h2>📝 Incluir Atividade</h2>
       <div className="card">
-        <p>Registre atividades extras realizadas no expediente.</p>
-        <p className="text-muted">Registros disponíveis: {registros.length}</p>
+        {msg && <div className={msg.startsWith('✅') ? 'success-msg' : 'error-msg'}>{msg}</div>}
+        <form onSubmit={handle}>
+          <div className="form-group">
+            <label>Data *</label>
+            <input type="date" value={data} onChange={(e) => setData(e.target.value)} required />
+          </div>
+          <div className="form-group">
+            <label>Descrição *</label>
+            <textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} required />
+          </div>
+          <div className="modal-actions">
+            <button type="button" className="btn-secondary" onClick={onDone}>Voltar</button>
+            <button type="submit" className="btn-primary">Registrar Atividade</button>
+          </div>
+        </form>
+        {atividades.length > 0 && (
+          <table className="folha-tabela">
+            <thead><tr><th>Data</th><th>Descrição</th></tr></thead>
+            <tbody>{atividades.map((item) => (
+              <tr key={item.id}><td>{new Date(`${item.data}T12:00:00`).toLocaleDateString('pt-BR')}</td><td>{item.descricao}</td></tr>
+            ))}</tbody>
+          </table>
+        )}
       </div>
     </div>
   );
 }
 
 function AjustarPontoView({ emp, onDone }) {
+  const [form, setForm] = useState({ data: '', tipo: 'entrada', horario: '', motivo: '' });
+  const [msg, setMsg] = useState('');
+  const handle = async (event) => {
+    event.preventDefault();
+    setMsg('');
+    try {
+      await addSolicitacao(emp.id, {
+        tipo: 'Ajuste de Ponto',
+        data: form.data,
+        horario: form.horario,
+        tipoRegistro: form.tipo,
+        motivo: form.motivo,
+      });
+      setMsg('✅ Solicitação enviada!');
+      setForm({ data: '', tipo: 'entrada', horario: '', motivo: '' });
+    } catch (error) {
+      setMsg(`❌ ${error.message}`);
+    }
+  };
   return (
     <div className="placeholder-page">
       <h2>✏️ Ajustar Ponto</h2>
       <div className="card">
-        <p>Solicite ajustes nos seus registros de ponto.</p>
+        {msg && <div className={msg.startsWith('✅') ? 'success-msg' : 'error-msg'}>{msg}</div>}
+        <form onSubmit={handle}>
+          <div className="form-group">
+            <label>Data *</label>
+            <input type="date" value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })} required />
+          </div>
+          <div className="form-group">
+            <label>Tipo do registro *</label>
+            <select value={form.tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value })}>
+              <option value="entrada">Entrada</option>
+              <option value="saida">Saída</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Horário correto *</label>
+            <input type="time" value={form.horario} onChange={(e) => setForm({ ...form, horario: e.target.value })} required />
+          </div>
+          <div className="form-group">
+            <label>Motivo *</label>
+            <textarea value={form.motivo} onChange={(e) => setForm({ ...form, motivo: e.target.value })} required />
+          </div>
+          <div className="modal-actions">
+            <button type="button" className="btn-secondary" onClick={onDone}>Cancelar</button>
+            <button type="submit" className="btn-primary">Enviar Solicitação</button>
+          </div>
+        </form>
       </div>
     </div>
   );

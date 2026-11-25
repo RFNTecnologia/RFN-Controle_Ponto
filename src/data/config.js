@@ -28,20 +28,42 @@ export const FERIADOS_FIXOS = [
 
 const CONFIG_KEY = 'ponto.config';
 
+import { supabase } from './supabase.js';
+
 export function getConfig() {
   try {
     const salvo = localStorage.getItem(CONFIG_KEY);
-    if (salvo) return JSON.parse(salvo);
+    if (salvo) return { ...CONFIG, ...JSON.parse(salvo) };
   } catch {
     // ignore
   }
   return { ...CONFIG };
 }
 
-export function saveConfig(values) {
+export async function loadRemoteConfig() {
+  if (!supabase) return getConfig();
+  const { data, error } = await supabase
+    .from('app_settings')
+    .select('data')
+    .eq('id', 'company')
+    .maybeSingle();
+  if (error) throw new Error(`Não foi possível carregar as configurações: ${error.message}`);
+  if (!data?.data) return getConfig();
+  const config = { ...CONFIG, ...data.data };
+  localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+  return config;
+}
+
+export async function saveConfig(values) {
   const atual = getConfig();
   const merged = { ...atual, ...values };
+  if (!supabase) throw new Error('A conexão com o Supabase não está configurada.');
+  const { error } = await supabase
+    .from('app_settings')
+    .upsert({ id: 'company', data: merged }, { onConflict: 'id' });
+  if (error) throw new Error(`Não foi possível salvar as configurações: ${error.message}`);
   localStorage.setItem(CONFIG_KEY, JSON.stringify(merged));
+  return merged;
 }
 
 export function resetConfig() {

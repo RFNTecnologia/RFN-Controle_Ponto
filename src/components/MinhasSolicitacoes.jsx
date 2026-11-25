@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
+import { getSolicitacoes } from '../data/storage.js';
 
 export default function MinhasSolicitacoes({ emp }) {
-  const [lista, setLista] = useState([
-    { id: 1, tipo: 'Ajuste de Ponto', data: '2025-01-15', status: 'Pendente' },
-    { id: 2, tipo: 'Justificativa', data: '2025-01-10', status: 'Aprovado' },
-  ]);
+  const [lista] = useState(() => getSolicitacoes(emp.id));
 
   return (
     <div className="placeholder-page">

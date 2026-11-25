@@ -12,12 +12,21 @@ export default function JustificarAusencia({ emp, onDone }) {
     if (!data) return setMsg('Selecione a data.');
     if (ehDomingo(data) || ehFeriado(data)) return setMsg('Domingos e feriados não precisam de justificativa.');
     try {
+      let foto = null;
+      if (form.foto) {
+        foto = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = () => reject(new Error('Não foi possível ler o anexo.'));
+          reader.readAsDataURL(form.foto);
+        });
+      }
       await addRegistro({
         idEmpregado: emp.id,
         tipo: 'justificativa',
         dataHora: `${data}T12:00:00`,
         localizacao: null,
-        foto: form.foto,
+        foto,
         justificativa: form.motivo,
       });
       setMsg('✅ Justificativa enviada com sucesso!');
@@ -44,7 +53,7 @@ export default function JustificarAusencia({ emp, onDone }) {
           </div>
           <div className="form-group">
             <label>Foto do Anexo (opcional)</label>
-            <input type="file" accept="image/*" onChange={(e) => setForm({ ...form, foto: e.target.files[0] ? URL.createObjectURL(e.target.files[0]) : null })} />
+            <input type="file" accept="image/*" onChange={(e) => setForm({ ...form, foto: e.target.files[0] || null })} />
           </div>
           <div className="modal-actions">
             <button type="button" className="btn-secondary" onClick={onDone}>Cancelar</button>
