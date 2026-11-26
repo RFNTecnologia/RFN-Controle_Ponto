@@ -99,6 +99,15 @@
 			"isBackground": false,
 			"problemMatcher": [],
 			"group": "test"
+		},
+		{
+			"label": "Parar servidores Vite do projeto",
+			"type": "shell",
+			"command": "Stop-Process -Id 4508; Stop-Process -Id 24648",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
 		}
 	]
 }
