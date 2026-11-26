@@ -153,6 +153,87 @@
 			"isBackground": false,
 			"problemMatcher": [],
 			"group": "build"
+		},
+		{
+			"label": "Finalizar remediação npm",
+			"type": "shell",
+			"command": "npm audit fix",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Inspecionar dependências audit",
+			"type": "shell",
+			"command": "npm ls workbox-build glob minimatch serialize-javascript --depth=5; npm view glob version; npm view minimatch version; npm view workbox-build version",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Checar versões transitivas corrigidas",
+			"type": "shell",
+			"command": "npm view glob@14.0.2 engines dependencies --json; npm view minimatch@11.0.1 engines --json",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Instalar overrides transitivos",
+			"type": "shell",
+			"command": "npm install",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Testar versões atualizadas",
+			"type": "shell",
+			"command": "npm test",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Build após auditoria limpa",
+			"type": "shell",
+			"command": "npm run build",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Confirmar auditoria limpa",
+			"type": "shell",
+			"command": "npm audit; npm audit --omit=dev",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Iniciar PontoFacil local",
+			"type": "shell",
+			"command": "npm run dev -- --host 127.0.0.1",
+			"args": [],
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Verificar servidor local",
+			"type": "shell",
+			"command": "(Invoke-WebRequest -Uri http://127.0.0.1:5173/RFN-Controle_Ponto/ -UseBasicParsing).StatusCode",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
 		}
 	]
 }
