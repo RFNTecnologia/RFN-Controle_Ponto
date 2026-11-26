@@ -81,6 +81,15 @@
 			"isBackground": false,
 			"problemMatcher": [],
 			"group": "build"
+		},
+		{
+			"label": "Instalar ferramentas atualizadas",
+			"type": "shell",
+			"command": "npm install --save-dev vite@6.4.4 vitest@5.1.2 @vitejs/plugin-react@5.2.0 vite-plugin-pwa@0.21.2",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
 		}
 	]
 }
