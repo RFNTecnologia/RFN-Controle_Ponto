@@ -8,18 +8,18 @@ import AlterarSenha from './AlterarSenha.jsx';
 import MinhasSolicitacoes from './MinhasSolicitacoes.jsx';
 import Configuracoes from './Configuracoes.jsx';
 import Ajuda from './Ajuda.jsx';
-import { CONFIG } from '../data/config.js';
+import { getConfig } from '../data/config.js';
 import { getRegistros, addSolicitacao, addAtividade, getAtividades } from '../data/storage.js';
 import { ehFeriado, ehDomingo, ehSabado } from '../data/feriados.js';
 import { calcularMes, minutosParaHoras } from '../utils/calculos.js';
-import { getConfig } from '../data/config.js';
+import { dataLocalISO, mesLocalISO } from '../utils/datas.js';
 
 export default function ColaboradorDashboard({ emp, onLogout }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [view, setView] = useState('incluir-ponto'); // indicadores | cartao-ponto | incluir-ponto | incluir-atividade | ajustar-ponto | justificar-ausencia | solicitacoes | dados-cadastrais | alterar-senha | configuracoes | ajuda
+  const [view, setView] = useState('indicadores');
 
-  const hoje = new Date().toISOString().slice(0, 10);
-  const mesAno = new Date().toISOString().slice(0, 7);
+  const hoje = dataLocalISO();
+  const mesAno = mesLocalISO();
   const stats = calcularMes(emp.id, mesAno);
 
   const ultimoReg = getRegistros()
@@ -79,7 +79,7 @@ export default function ColaboradorDashboard({ emp, onLogout }) {
 
         <div className="drawer-nav">
           <button className={`drawer-item ${view === 'incluir-ponto' ? 'active' : ''}`} onClick={() => navigate('incluir-ponto')}>
-            <span className="drawer-icon">➕</span> Incluir Ponto
+            <span className="drawer-icon">➕</span> Bater Ponto
           </button>
           <button className={`drawer-item ${view === 'indicadores' ? 'active' : ''}`} onClick={() => navigate('indicadores')}>
             <span className="drawer-icon">📊</span> Indicadores
@@ -243,7 +243,7 @@ function IncluirPontoView({ emp, onDone }) {
 
 function IncluirAtividadeView({ emp, onDone }) {
   const [descricao, setDescricao] = useState('');
-  const [data, setData] = useState(new Date().toISOString().slice(0, 10));
+  const [data, setData] = useState(dataLocalISO());
   const [msg, setMsg] = useState('');
   const atividades = getAtividades(emp.id);
   const handle = async (event) => {
@@ -292,21 +292,29 @@ function IncluirAtividadeView({ emp, onDone }) {
 function AjustarPontoView({ emp, onDone }) {
   const [form, setForm] = useState({ data: '', tipo: 'entrada', horario: '', motivo: '' });
   const [msg, setMsg] = useState('');
+  const [enviando, setEnviando] = useState(false);
   const handle = async (event) => {
     event.preventDefault();
     setMsg('');
+    if (form.data > dataLocalISO()) {
+      setMsg('❌ A data do ajuste não pode ser futura.');
+      return;
+    }
+    setEnviando(true);
     try {
       await addSolicitacao(emp.id, {
         tipo: 'Ajuste de Ponto',
         data: form.data,
         horario: form.horario,
         tipoRegistro: form.tipo,
-        motivo: form.motivo,
+        motivo: form.motivo.trim(),
       });
-      setMsg('✅ Solicitação enviada!');
+      setMsg('✅ Solicitação enviada para análise do RH.');
       setForm({ data: '', tipo: 'entrada', horario: '', motivo: '' });
     } catch (error) {
       setMsg(`❌ ${error.message}`);
+    } finally {
+      setEnviando(false);
     }
   };
   return (
@@ -317,7 +325,7 @@ function AjustarPontoView({ emp, onDone }) {
         <form onSubmit={handle}>
           <div className="form-group">
             <label>Data *</label>
-            <input type="date" value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })} required />
+            <input type="date" max={dataLocalISO()} value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })} required />
           </div>
           <div className="form-group">
             <label>Tipo do registro *</label>
@@ -336,7 +344,7 @@ function AjustarPontoView({ emp, onDone }) {
           </div>
           <div className="modal-actions">
             <button type="button" className="btn-secondary" onClick={onDone}>Cancelar</button>
-            <button type="submit" className="btn-primary">Enviar Solicitação</button>
+            <button type="submit" className="btn-primary" disabled={enviando}>{enviando ? 'Enviando...' : 'Enviar Solicitação'}</button>
           </div>
         </form>
       </div>

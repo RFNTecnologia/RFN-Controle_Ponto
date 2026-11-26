@@ -1,7 +1,8 @@
 import React from 'react';
-import { CONFIG } from '../data/config.js';
+import { getConfig } from '../data/config.js';
 
 export default function Configuracoes() {
+  const CONFIG = getConfig();
   return (
     <div className="placeholder-page">
       <h2>⚙️ Configurações</h2>

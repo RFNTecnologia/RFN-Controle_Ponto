@@ -1,19 +1,26 @@
 import React, { useState } from 'react';
-import { getRegistros, addRegistro, getEmpregados } from '../data/storage.js';
+import { addSolicitacao } from '../data/storage.js';
 import { ehFeriado, ehDomingo } from '../data/feriados.js';
+import { dataLocalISO } from '../utils/datas.js';
 
 export default function JustificarAusencia({ emp, onDone }) {
   const [form, setForm] = useState({ data: '', motivo: '', foto: null });
   const [msg, setMsg] = useState('');
+  const [enviando, setEnviando] = useState(false);
 
   const handle = async (e) => {
     e.preventDefault();
     const data = form.data;
     if (!data) return setMsg('Selecione a data.');
+    if (data > dataLocalISO()) return setMsg('A data da ausência não pode ser futura.');
     if (ehDomingo(data) || ehFeriado(data)) return setMsg('Domingos e feriados não precisam de justificativa.');
+    setEnviando(true);
     try {
       let foto = null;
       if (form.foto) {
+        if (form.foto.size > 5 * 1024 * 1024) {
+          throw new Error('O anexo deve ter no máximo 5 MB.');
+        }
         foto = await new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = () => resolve(reader.result);
@@ -21,19 +28,18 @@ export default function JustificarAusencia({ emp, onDone }) {
           reader.readAsDataURL(form.foto);
         });
       }
-      await addRegistro({
-        idEmpregado: emp.id,
-        tipo: 'justificativa',
-        dataHora: `${data}T12:00:00`,
-        localizacao: null,
+      await addSolicitacao(emp.id, {
+        tipo: 'Justificativa',
+        data,
+        motivo: form.motivo.trim(),
         foto,
-        justificativa: form.motivo,
       });
-      setMsg('✅ Justificativa enviada com sucesso!');
+      setMsg('✅ Justificativa enviada para análise do RH.');
       setForm({ data: '', motivo: '', foto: null });
-      setTimeout(onDone, 1200);
     } catch (error) {
       setMsg(`❌ ${error.message}`);
+    } finally {
+      setEnviando(false);
     }
   };
 
@@ -45,7 +51,7 @@ export default function JustificarAusencia({ emp, onDone }) {
         <form onSubmit={handle}>
           <div className="form-group">
             <label>Data da Ausência *</label>
-            <input type="date" value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })} required />
+            <input type="date" max={dataLocalISO()} value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })} required />
           </div>
           <div className="form-group">
             <label>Motivo *</label>
@@ -57,7 +63,7 @@ export default function JustificarAusencia({ emp, onDone }) {
           </div>
           <div className="modal-actions">
             <button type="button" className="btn-secondary" onClick={onDone}>Cancelar</button>
-            <button type="submit" className="btn-primary">Enviar Justificativa</button>
+            <button type="submit" className="btn-primary" disabled={enviando}>{enviando ? 'Enviando...' : 'Enviar Justificativa'}</button>
           </div>
         </form>
       </div>

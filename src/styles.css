@@ -2639,6 +2639,26 @@ select:focus, input:focus, textarea:focus {
   background: #fff;
 }
 
+.admin-container .admin-request-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-container .admin-request-actions .btn-small {
+  min-width: 76px;
+  min-height: 36px;
+  font-weight: 700;
+}
+
+.admin-container .admin-table a {
+  display: inline-block;
+  margin-left: 6px;
+  color: #0756b2;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
 .admin-container .error-msg,
 .admin-container .success-msg {
   margin: 0 0 16px;

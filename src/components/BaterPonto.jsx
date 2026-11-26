@@ -3,6 +3,7 @@ import { useGeolocation } from '../hooks.js';
 import { useCamera } from '../hooks.js';
 import { getConfig } from '../data/config.js';
 import { addRegistro } from '../data/storage.js';
+import { dataLocalISO } from '../utils/datas.js';
 import {
   ultimoTipoHoje,
   ehDomingo,
@@ -23,7 +24,7 @@ export default function BaterPonto({ emp, onClose }) {
   const { pos, erro: geoErro, solicitar: solicitarGeo } = useGeolocation();
   const { stream, erro: camErro, iniciar, parar, capturar } = useCamera(videoRef, (f) => setFoto(f));
 
-  const hoje = new Date().toISOString().slice(0, 10);
+  const hoje = dataLocalISO();
   const ultimo = emp ? ultimoTipoHoje(emp.id, hoje) : null;
   const isFeriado = ehFeriado(hoje);
   const isDomingo = ehDomingo(hoje);

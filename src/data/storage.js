@@ -82,7 +82,32 @@ export async function initDB() {
 }
 
 export function getSolicitacoes(employeeId) {
-  return solicitacoesCache.filter((item) => item.employeeId === employeeId);
+  if (employeeId === undefined) return [...solicitacoesCache];
+  return solicitacoesCache.filter((item) => item.employeeId === String(employeeId));
+}
+
+export async function carregarSolicitacoes(employeeId) {
+  const client = requireSupabase();
+  let query = client
+    .from('requests')
+    .select('id,employee_id,data')
+    .order('created_at', { ascending: false });
+  if (employeeId !== undefined) query = query.eq('employee_id', String(employeeId));
+
+  const { data, error } = await query;
+  if (error) throw new Error(`Não foi possível carregar as solicitações: ${error.message}`);
+  const recebidas = (data || []).map((row) => ({
+    ...row.data,
+    id: row.id,
+    employeeId: row.employee_id,
+  }));
+  if (employeeId === undefined) {
+    solicitacoesCache = recebidas;
+  } else {
+    const outras = solicitacoesCache.filter((item) => item.employeeId !== String(employeeId));
+    solicitacoesCache = [...outras, ...recebidas];
+  }
+  return getSolicitacoes(employeeId);
 }
 
 export async function addSolicitacao(employeeId, data) {
@@ -98,6 +123,55 @@ export async function addSolicitacao(employeeId, data) {
   const item = { ...row.data, id, employeeId: String(employeeId) };
   solicitacoesCache = [item, ...solicitacoesCache];
   return item;
+}
+
+export async function decidirSolicitacao(id, status) {
+  if (!['Aprovado', 'Rejeitado'].includes(status)) {
+    throw new Error('Status de solicitação inválido.');
+  }
+  const client = requireSupabase();
+  const solicitacao = solicitacoesCache.find((item) => item.id === id);
+  if (!solicitacao) throw new Error('Solicitação não encontrada. Atualize a página e tente novamente.');
+  if (solicitacao.status !== 'Pendente') throw new Error('Esta solicitação já foi analisada.');
+
+  if (status === 'Aprovado' && ['Ajuste de Ponto', 'Justificativa'].includes(solicitacao.tipo)) {
+    const tipo = solicitacao.tipo === 'Justificativa' ? 'justificativa' : solicitacao.tipoRegistro;
+    if (!['entrada', 'saida', 'justificativa'].includes(tipo)) {
+      throw new Error('A solicitação não contém um tipo de registro válido.');
+    }
+    const registro = {
+      id: `sol-${id}`,
+      employee_id: solicitacao.employeeId,
+      data: {
+        id: `sol-${id}`,
+        idEmpregado: solicitacao.employeeId,
+        tipo,
+        dataHora: `${solicitacao.data}T${solicitacao.horario || '12:00'}:00`,
+        localizacao: null,
+        foto: solicitacao.foto || null,
+        justificativa: solicitacao.motivo,
+        origem: 'solicitacao_aprovada',
+      },
+    };
+    const { error: recordError } = await client.from('time_records').upsert(registro, { onConflict: 'id' });
+    if (recordError) throw new Error(`Solicitação não aprovada: não foi possível registrar o ponto. ${recordError.message}`);
+    registrosCache = [...registrosCache.filter((item) => item.id !== registro.id), registro.data];
+  }
+
+  const { data, error } = await client
+    .from('requests')
+    .update({ data: { ...solicitacao, status } })
+    .eq('id', String(id))
+    .eq('data->>status', 'Pendente')
+    .select('id')
+    .maybeSingle();
+  if (error) throw new Error(`Não foi possível atualizar a solicitação: ${error.message}`);
+  if (!data) throw new Error('A solicitação já foi analisada em outra sessão. Atualize a página.');
+
+  solicitacoesCache = solicitacoesCache.map((item) =>
+    item.id === id ? { ...item, status } : item
+  );
+  return solicitacoesCache.find((item) => item.id === id);
 }
 
 export function getAtividades(employeeId) {

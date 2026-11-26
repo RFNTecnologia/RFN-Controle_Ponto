@@ -5,6 +5,7 @@ import { getEmpregados, getRegistros } from '../data/storage.js';
 import { ehFeriado, ehDomingo, ehSabado } from '../data/feriados.js';
 import { exportarCSV } from './Admin.jsx';
 import { LOGO_URL } from '../data/branding.js';
+import { mesLocalISO } from '../utils/datas.js';
 
 const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 const MESES = [
@@ -14,7 +15,7 @@ const MESES = [
 
 export default function Folha({ empId, mesAno }) {
   const [mesAnoAtual, setMesAnoAtual] = useState(
-    mesAno || new Date().toISOString().slice(0, 7)
+    mesAno || mesLocalISO()
   );
   const emp = getEmpregados().find((e) => e.id === empId);
   const stats = useMemo(() => calcularMes(empId, mesAnoAtual), [empId, mesAnoAtual]);

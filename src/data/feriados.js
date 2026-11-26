@@ -1,4 +1,4 @@
-import { FERIADOS_FIXOS } from './config.js';
+import { FERIADOS_FIXOS, getConfig } from './config.js';
 
 // Retorna a data (YYYY-MM-DD) do feriado no ano informado, se existir.
 export function feriadoNoAno(ano) {
@@ -93,6 +93,7 @@ export function ehSabado(iso) {
 }
 
 export function diaUtil(iso) {
-  return !ehDomingo(iso) && !ehSabado(iso) && !ehFeriado(iso);
+  const diaSemana = new Date(`${iso}T12:00:00`).getDay();
+  return getConfig().diasSemana.includes(diaSemana) && !ehFeriado(iso);
 }
 import { getFeriadosCustom } from './storage.js';

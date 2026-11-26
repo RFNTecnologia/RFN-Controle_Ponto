@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { todosFeriados } from '../data/feriados.js';
-import { getEmpregados, addEmpregado, updateEmpregado, deleteEmpregado, getRegistros, getFeriadosCustom, addFeriadoCustom, removeFeriadoCustom } from '../data/storage.js';
+import { getEmpregados, addEmpregado, updateEmpregado, deleteEmpregado, getRegistros, getFeriadosCustom, addFeriadoCustom, removeFeriadoCustom, getSolicitacoes, carregarSolicitacoes, decidirSolicitacao } from '../data/storage.js';
 import { getConfig, saveConfig, CONFIG } from '../data/config.js';
 
 export function exportarCSV(idEmp, mesAno) {
@@ -33,6 +33,7 @@ export function exportarCSV(idEmp, mesAno) {
 export default function Admin({ onLogout }) {
   const [tab, setTab] = useState('empregados');
   const [empregados, setEmpregados] = useState(getEmpregados());
+  const [solicitacoes, setSolicitacoes] = useState(getSolicitacoes());
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ nome: '', cargo: '', matricula: '', cpf: '', email: '', telefone: '', admin: false });
   const [editId, setEditId] = useState(null);
@@ -44,6 +45,21 @@ export default function Admin({ onLogout }) {
   const [search, setSearch] = useState('');
   const [cfg, setCfg] = useState(getConfig());
   const [cfgSaved, setCfgSaved] = useState(false);
+
+  useEffect(() => {
+    if (tab !== 'solicitacoes') return undefined;
+    let ativo = true;
+    carregarSolicitacoes()
+      .then((itens) => {
+        if (ativo) setSolicitacoes(itens);
+      })
+      .catch((error) => {
+        if (ativo) setSaveError(error.message);
+      });
+    return () => {
+      ativo = false;
+    };
+  }, [tab]);
 
   const registros = useMemo(() => {
     const termo = search.toLowerCase();
@@ -57,6 +73,21 @@ export default function Admin({ onLogout }) {
   const refresh = () => {
     setEmpregados(getEmpregados());
     setCustomFeriados(getFeriadosCustom());
+    setSolicitacoes(getSolicitacoes());
+  };
+
+  const analisarSolicitacao = async (solicitacao, status) => {
+    setSaveError('');
+    setSaveMessage('');
+    try {
+      await decidirSolicitacao(solicitacao.id, status);
+      setSolicitacoes(getSolicitacoes());
+      setSaveMessage(status === 'Aprovado'
+        ? 'Solicitação aprovada e aplicada ao cartão de ponto.'
+        : 'Solicitação rejeitada.');
+    } catch (error) {
+      setSaveError(error.message);
+    }
   };
 
   const salvarConfig = async (e) => {
@@ -171,6 +202,9 @@ export default function Admin({ onLogout }) {
         <button className={`tab ${tab === 'registros' ? 'active' : ''}`} onClick={() => setTab('registros')}>
           📝 Registros
         </button>
+        <button className={`tab ${tab === 'solicitacoes' ? 'active' : ''}`} onClick={() => setTab('solicitacoes')}>
+          📬 Solicitações ({solicitacoes.filter((item) => item.status === 'Pendente').length})
+        </button>
         <button className={`tab ${tab === 'feriados' ? 'active' : ''}`} onClick={() => setTab('feriados')}>
           📅 Feriados
         </button>
@@ -180,6 +214,56 @@ export default function Admin({ onLogout }) {
       </div>
       {saveError && <div className="error-msg">{saveError}</div>}
       {saveMessage && <div className="success-msg">{saveMessage}</div>}
+
+      {tab === 'solicitacoes' && (
+        <div className="tab-content">
+          <h3>Solicitações dos colaboradores</h3>
+          {solicitacoes.length === 0 ? (
+            <p className="text-muted">Nenhuma solicitação recebida.</p>
+          ) : (
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Colaborador</th>
+                  <th>Tipo</th>
+                  <th>Data</th>
+                  <th>Detalhes</th>
+                  <th>Status</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {solicitacoes.map((item) => {
+                  const colaborador = empregados.find((employee) => employee.id === item.employeeId);
+                  const detalhe = item.tipo === 'Ajuste de Ponto'
+                    ? `${item.tipoRegistro === 'entrada' ? 'Entrada' : 'Saída'} ${item.horario || ''} — ${item.motivo || ''}`
+                    : item.motivo || '—';
+                  return (
+                    <tr key={item.id}>
+                      <td>{colaborador?.nome || item.employeeId}</td>
+                      <td>{item.tipo}</td>
+                      <td>{item.data ? new Date(`${item.data}T12:00:00`).toLocaleDateString('pt-BR') : '—'}</td>
+                      <td>
+                        {detalhe}
+                        {item.foto && <a href={item.foto} target="_blank" rel="noreferrer">Ver anexo</a>}
+                      </td>
+                      <td>{item.status}</td>
+                      <td>
+                        {item.status === 'Pendente' ? (
+                          <div className="admin-request-actions">
+                            <button className="btn-small btn-primary" onClick={() => analisarSolicitacao(item, 'Aprovado')}>Aprovar</button>
+                            <button className="btn-small btn-danger" onClick={() => analisarSolicitacao(item, 'Rejeitado')}>Rejeitar</button>
+                          </div>
+                        ) : '—'}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
 
       {/* TAB: EMPREGADOS */}
       {tab === 'empregados' && (
