@@ -2489,3 +2489,190 @@ select:focus, input:focus, textarea:focus {
     min-width: 150px;
   }
 }
+
+/* =================== ADMIN - PAINEL AZUL ESCURO =================== */
+.admin-container {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  min-height: 100vh;
+  margin: 0;
+  padding: 28px clamp(16px, 4vw, 56px);
+  color: #e8f0ff;
+  background: linear-gradient(145deg, #07152f 0%, #0b1f43 52%, #102b57 100%);
+}
+
+.admin-container .admin-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.admin-container .admin-header h2 {
+  color: #f5f8ff;
+}
+
+.admin-container .admin-header-actions {
+  display: flex !important;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  visibility: visible;
+}
+
+.admin-container .admin-header-actions > button,
+.admin-container .section-header > .novo-colaborador {
+  display: inline-flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 18px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.admin-container .admin-header-actions .novo-colaborador-cabecalho,
+.admin-container .section-header > .novo-colaborador {
+  background: #1677e8;
+  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.2);
+}
+
+.admin-container .admin-header-actions .novo-colaborador-cabecalho:hover,
+.admin-container .section-header > .novo-colaborador:hover {
+  background: #318bfa;
+}
+
+.admin-container .admin-header-actions .btn-logout-admin {
+  background: #c5374d;
+}
+
+.admin-container .admin-header-actions .btn-logout-admin:hover {
+  background: #e0475e;
+}
+
+.admin-container .admin-tabs {
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.admin-container .tab {
+  border-color: #28466f;
+  background: #10294d;
+  color: #dce8fa;
+}
+
+.admin-container .tab:hover,
+.admin-container .tab.active {
+  border-color: #3287ed;
+  background: #1768c3;
+  color: #fff;
+}
+
+.admin-container .tab-content {
+  padding: 24px;
+  border: 1px solid rgba(198, 218, 247, 0.75);
+  border-radius: 14px;
+  background: #f4f8ff;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.16);
+  color: #17243b;
+}
+
+.admin-container .tab-content h3,
+.admin-container .tab-content .section-header h3 {
+  color: #102442;
+}
+
+.admin-container .card,
+.admin-container .config-form {
+  color: #17243b;
+}
+
+.admin-container .tab-content label,
+.admin-container .tab-content p,
+.admin-container .tab-content th,
+.admin-container .tab-content td {
+  color: #17243b;
+}
+
+.admin-container .tab-content .text-muted {
+  color: #52647e;
+}
+
+.admin-container .tab-content input,
+.admin-container .tab-content select,
+.admin-container .tab-content textarea {
+  color: #17243b;
+  background-color: #fff;
+}
+
+.admin-container .tab-content input::placeholder,
+.admin-container .tab-content textarea::placeholder {
+  color: #65758b;
+  opacity: 1;
+}
+
+.admin-container .admin-table {
+  border: 1px solid #d6e0ef;
+}
+
+.admin-container .admin-table th {
+  color: #102442;
+  background: #e8f0fb;
+}
+
+.admin-container .admin-table td {
+  color: #17243b;
+  background: #fff;
+}
+
+.admin-container .error-msg,
+.admin-container .success-msg {
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+@media (max-width: 600px) {
+  .admin-container {
+    padding: 20px 14px;
+  }
+
+  .admin-container .admin-header {
+    align-items: stretch;
+  }
+
+  .admin-container .admin-header-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .admin-container .admin-header-actions > button {
+    flex: 1 1 140px;
+  }
+
+  .admin-container .section-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .admin-container .tab-content {
+    padding: 16px;
+    overflow-x: auto;
+  }
+}

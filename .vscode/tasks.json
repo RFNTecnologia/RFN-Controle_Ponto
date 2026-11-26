@@ -234,6 +234,60 @@
 			"isBackground": false,
 			"problemMatcher": [],
 			"group": "test"
+		},
+		{
+			"label": "Localizar estilos do admin",
+			"type": "shell",
+			"command": "Select-String -Path src\\styles.css -Pattern 'admin-container|admin-header|admin-tabs|novo-colaborador|btn-logout-admin|admin-table|section-header' -Context 3,8",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Investigar CSS do painel",
+			"type": "shell",
+			"command": "node -e \"const fs=require('fs');const a=fs.readFileSync('src/styles.css','utf8').split(/\\r?\\n/);a.forEach((s,i)=>{if(/admin-header-actions|novo-colaborador|btn-logout-admin|admin-container|\\.btn-primary/.test(s))console.log((i+1)+': '+s.trim())})\"",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Localizar fim do CSS",
+			"type": "shell",
+			"command": "Get-Content src\\styles.css -Tail 90",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Build do painel administrativo",
+			"type": "shell",
+			"command": "npm run build",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Testes após ajuste visual",
+			"type": "shell",
+			"command": "npm test",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Validar contraste do painel",
+			"type": "shell",
+			"command": "npm run build; npm test",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
 		}
 	]
 }
