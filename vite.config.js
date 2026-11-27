@@ -2,8 +2,10 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
+const basePath = process.env.BASE_PATH || '/RFN-Controle_Ponto/';
+
 export default defineConfig({
-  base: '/RFN-Controle_Ponto/',
+  base: basePath,
   plugins: [
     react(),
     VitePWA({
@@ -16,8 +18,9 @@ export default defineConfig({
         theme_color: '#1a1a2e',
         background_color: '#ffffff',
         display: 'standalone',
-        start_url: '/RFN-Controle_Ponto/',
-        scope: '/RFN-Controle_Ponto/',
+        lang: 'pt-BR',
+        start_url: basePath,
+        scope: basePath,
         icons: [
           { src: 'logo.png', sizes: '512x512', type: 'image/png' }
         ]

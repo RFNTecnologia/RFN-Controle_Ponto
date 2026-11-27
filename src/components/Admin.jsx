@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { todosFeriados } from '../data/feriados.js';
 import { getEmpregados, addEmpregado, updateEmpregado, deleteEmpregado, getRegistros, getFeriadosCustom, addFeriadoCustom, removeFeriadoCustom, getSolicitacoes, carregarSolicitacoes, decidirSolicitacao } from '../data/storage.js';
 import { getConfig, saveConfig, CONFIG } from '../data/config.js';
+import ServidorProprio from './ServidorProprio.jsx';
 
 export function exportarCSV(idEmp, mesAno) {
   const registros = getRegistros().filter(
@@ -210,6 +211,9 @@ export default function Admin({ onLogout }) {
         </button>
         <button className={`tab ${tab === 'config' ? 'active' : ''}`} onClick={() => setTab('config')}>
           ⚙️ Configurações
+        </button>
+        <button className={`tab ${tab === 'servidor' ? 'active' : ''}`} onClick={() => setTab('servidor')}>
+          🖥️ Servidor Próprio
         </button>
       </div>
       {saveError && <div className="error-msg">{saveError}</div>}
@@ -446,6 +450,9 @@ export default function Admin({ onLogout }) {
           </table>
         </div>
       )}
+
+      {/* TAB: SERVIDOR PRÓPRIO */}
+      {tab === 'servidor' && <ServidorProprio />}
 
       {/* TAB: CONFIG */}
       {tab === 'config' && (

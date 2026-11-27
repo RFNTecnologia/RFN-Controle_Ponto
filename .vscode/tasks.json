@@ -315,6 +315,51 @@
 			"isBackground": false,
 			"problemMatcher": [],
 			"group": "build"
+		},
+		{
+			"label": "Build e testar VPS",
+			"type": "shell",
+			"command": "npm run build:vps; npm test; npm audit",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Restaurar dependências",
+			"type": "shell",
+			"command": "npm install",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Revalidar build VPS e testes",
+			"type": "shell",
+			"command": "npm run build:vps; npm test; npm audit",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Verificar arquivos alterados",
+			"type": "shell",
+			"command": "git --no-pager status --short; git --no-pager diff --stat",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Build final VPS e validar",
+			"type": "shell",
+			"command": "npm run build:vps; npm test; npm audit",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
 		}
 	]
 }
