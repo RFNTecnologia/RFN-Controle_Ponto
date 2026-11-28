@@ -1,0 +1,20 @@
+# Build da imagem
+docker build -t pontofacil:local .
+
+# Build com variaveis do Supabase injetadas (front-end)
+docker build \
+  --build-arg BASE_PATH=/ \
+  --build-arg VITE_SUPABASE_URL="https://SEU-PROJETO.supabase.co" \
+  --build-arg VITE_SUPABASE_ANON_KEY="sua-chave-publica" \
+  -t pontofacil:local .
+
+# Rodar
+docker run -d --name pontofacil -p 8080:80 pontofacil:local
+
+# Rodar com compose
+docker compose up -d --build
+
+# Ver logs / status / parar
+docker logs -f pontofacil
+docker ps
+docker compose down

@@ -5,7 +5,7 @@ Aplicacao web de controle de ponto da RFNTecnologia, desenvolvida com React, Vit
 ## Configuracao
 
 1. Instale as dependencias com `npm install`.
-2. Copie `.env.example` para `.env.local` e informe a URL e a chave publica do projeto Supabase.
+2. Copie `env.example` para `.env.local` e informe a URL e a chave publica do projeto Supabase.
 3. Execute o SQL de `supabase-schema.sql` no editor SQL do Supabase.
 4. Crie o usuario administrador no Supabase Authentication usando o mesmo e-mail do perfil administrador.
 5. Em Authentication > URL Configuration, configure a URL local de desenvolvimento e o dominio publicado em Redirect URLs.
@@ -24,7 +24,7 @@ Aplicacao web de controle de ponto da RFNTecnologia, desenvolvida com React, Vit
 ### 1. Preparar o DNS e o build
 
 1. Aponte os registros DNS `A` do dominio (e `www`, se usar) para o IPv4 do VPS.
-2. Crie `.env.local` a partir de `.env.example` e informe a URL do projeto Supabase e a chave publica `anon`/`publishable`. Essa chave e usada no navegador; nunca coloque a `service_role` no frontend.
+2. Crie `.env.local` a partir de `env.example` e informe a URL do projeto Supabase e a chave publica `anon`/`publishable`. Essa chave e usada no navegador; nunca coloque a `service_role` no frontend.
 3. Execute `npm ci`, `npm test` e `npm run build:vps`. O site sera compilado para a raiz do dominio e os arquivos ficarao em `dist/`.
 
 ### 2. Instalar Nginx no VPS
@@ -79,6 +79,46 @@ No Supabase, abra **Authentication > URL Configuration**:
 - adicione `https://seu-dominio.com/**` e, se usado, `https://www.seu-dominio.com/**` em **Redirect URLs**.
 
 Teste o login, primeiro acesso, recuperacao de senha, camera e localizacao no dominio HTTPS. O Supabase continua hospedando autenticacao e banco; o Nginx apenas serve o frontend.
+
+## Docker Desktop (local)
+
+O projeto tem um `Dockerfile` multi-stage que compila o app com Node e serve o `dist/` com Nginx, sem depender do Node instalado na maquina.
+
+1. Certifique-se de que o Docker Desktop esta rodando.
+2. No terminal, na raiz do projeto:
+
+```sh
+docker compose up -d --build
+```
+
+3. Acesse `http://localhost:8080`.
+
+Para apontar para outro dominio/subpath, crie um arquivo `.env` ao lado do `docker-compose.yml` (use `env.example` como modelo):
+
+```
+BASE_PATH=/
+PORTA=8080
+VITE_SUPABASE_URL=https://SEU-PROJETO.supabase.co
+VITE_SUPABASE_ANON_KEY=sua-chave-publica
+```
+
+As variaveis `VITE_*` sao injetadas durante o build. A `service_role` do Supabase nunca deve ser usada aqui: o front-end so usa a chave publica `anon`/`publishable`.
+
+Comandos uteis:
+
+```sh
+docker compose logs -f pontofacil
+docker compose down
+docker compose up -d --build --force-recreate
+```
+
+Para servir em HTTPS (necessario para camera e geolocalizacao no celular), adicione um proxy com o Certbot ou use o Caddy:
+
+```sh
+docker run -d --name caddy -p 80:80 -p 443:443 \
+  -v caddy_data:/data -v caddy_config:/config \
+  caddy:2 caddy reverse-proxy --from seu-dominio.com --to pontofacil:80
+```
 
 ## Validacao e implantacao no GitHub Pages
 

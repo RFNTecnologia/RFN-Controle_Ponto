@@ -166,6 +166,20 @@ export default function ServidorProprio() {
           <li>Após configurar, use o comando <code>npm run build:vps</code> para gerar os arquivos para deploy.</li>
         </ul>
       </div>
+
+      <div className="help-box">
+        <h4>🐳 Deploy via Docker Desktop</h4>
+        <p>
+          O projeto já possui <code>Dockerfile</code> e <code>docker-compose.yml</code> prontos.
+          Com o Docker Desktop rodando, execute na raiz do projeto:
+        </p>
+        <ul>
+          <li><code>docker compose up -d --build</code> — compila e sobe em <code>http://localhost:8080</code>.</li>
+          <li><code>docker compose logs -f pontofacil</code> — acompanha os logs do container.</li>
+          <li><code>docker compose down</code> — derruba o container.</li>
+          <li>Para alterar host, porta ou subpath, edite as variaveis <code>BASE_PATH</code>, <code>PORTA</code> e <code>VITE_SUPABASE_URL</code> / <code>VITE_SUPABASE_ANON_KEY</code> no arquivo <code>.env</code> ao lado do compose.</li>
+        </ul>
+      </div>
     </div>
   );
 }

@@ -8,7 +8,17 @@
     "build": "vite build",
     "build:vps": "node scripts/build-vps.js",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "docker:build": "docker build -t pontofacil:local .",
+    "docker:up": "docker compose up -d --build",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f pontofacil",
+    "docker:info": "docker version",
+    "docker:compose": "docker compose version",
+    "docker:ps": "docker ps",
+    "docker:run": "docker run -d --name pontofacil -p 8080:80 pontofacil:local",
+    "docker:stop": "docker stop pontofacil",
+    "docker:rm": "docker rm -f pontofacil"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.2",
